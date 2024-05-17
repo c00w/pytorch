@@ -738,7 +738,7 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
     @functools.lru_cache(None)
     def _nn_module_method_ids():
         # Allow __setattr__ to fall through to base class handler
-        supported = {torch.nn.Module.__setattr__}
+        supported = {torch.nn.Module.__setattr__, torch.nn.Module.__init__}
         return {
             id(x.__code__)
             for x in torch.nn.Module.__dict__.values()
@@ -746,8 +746,6 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
         }
 
     def unpack_var_sequence(self, tx):
-        from .builder import VariableBuilder
-
         try:
             fn = inspect.getattr_static(self.value_type, "__iter__")
         except AttributeError as e:
@@ -758,11 +756,16 @@ class UnspecializedNNModuleVariable(UserDefinedObjectVariable):
             torch.nn.ParameterList.__iter__,
             torch.nn.Sequential.__iter__,
         ):
-            assert self.source
-            return [
-                VariableBuilder(tx, source=GetItemSource(self.source, idx))(item)
-                for idx, item in enumerate(self.value)
-            ]
+            # The program can mutate the nn module object but the saved `value`
+            # will not reflect the mutations. So, trace through the `__iter__`
+            # function to reflect any tracked mutations.
+            return tx.inline_user_function_return(
+                variables.UserFunctionVariable(fn),
+                [
+                    self,
+                ],
+                {},
+            ).unpack_var_sequence(tx)
 
         return super().unpack_var_sequence(tx)
 
