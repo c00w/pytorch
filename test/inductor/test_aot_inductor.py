@@ -257,18 +257,18 @@ class AOTInductorTestsTemplate:
         example_inputs = (torch.randn(32, 64, device=self.device),)
         self.check_model(Model(), example_inputs)
 
-    def test_large(self):
+    def test_large_weight(self):
         class Model(torch.nn.Module):
             def __init__(self):
                 super().__init__()
-                self.linear = torch.nn.Linear(512, 250112)
+                self.linear = torch.nn.Linear(2048, 262144)
 
             def forward(self, x, y):
                 return x + self.linear(y)
 
         example_inputs = (
-            torch.randn(1, 250112, device=self.device),
-            torch.randn(1, 512, device=self.device),
+            torch.randn(1, 262144, device=self.device),
+            torch.randn(1, 2048, device=self.device),
         )
         self.check_model(Model(), example_inputs)
 
@@ -2975,7 +2975,7 @@ if TEST_WITH_ROCM:
             "test_addmm_multiple_dynamic": fail_cuda(is_skip=True),
             "test_bmm_multiple_dynamic": fail_cuda(is_skip=True),
             "test_convolution": fail_cuda(is_skip=True),
-            "test_large": fail_cuda(is_skip=True),
+            "test_large_weight": fail_cuda(is_skip=True),
             "test_large_mmaped_weights": fail_cuda(is_skip=True),
             "test_missing_cubin": fail_cuda(is_skip=True),
             "test_multi_device": fail_cuda(is_skip=True),
@@ -3020,7 +3020,7 @@ if not IS_FBCODE:
             "test_constant_folding": fail_minimal_arrayref_interface(is_skip=True),
             "test_convolution": fail_minimal_arrayref_interface(is_skip=True),
             "test_empty_graph": fail_minimal_arrayref_interface(is_skip=True),
-            "test_large": fail_minimal_arrayref_interface(is_skip=True),
+            "test_large_weight": fail_minimal_arrayref_interface(is_skip=True),
             "test_large_mmaped_weights": fail_minimal_arrayref_interface(is_skip=True),
             "test_misc_1": fail_minimal_arrayref_interface(is_skip=True),
             "test_missing_output": fail_minimal_arrayref_interface(is_skip=True),
