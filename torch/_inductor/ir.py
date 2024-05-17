@@ -955,9 +955,7 @@ class Reduction(Loops):
                 return (
                     bool(val)
                     if dst_dtype == torch.bool
-                    else float(val)
-                    if dst_dtype.is_floating_point
-                    else int(val)
+                    else float(val) if dst_dtype.is_floating_point else int(val)
                 )
 
             rtypes_to_inits = {
@@ -3029,7 +3027,7 @@ class Buffer(IRNode):
         assert self.name, self
         return self.name
 
-    def get_device(self):
+    def get_device(self) -> torch.device:
         return self.layout.device
 
     def get_origin_node(self):
@@ -3285,9 +3283,11 @@ class ComputedBuffer(Buffer):
             )
             reads = self.get_read_writes().reads
             reads_bufs = [
-                V.graph.name_to_buffer[r.name]
-                if r.name in V.graph.name_to_buffer.keys()
-                else None
+                (
+                    V.graph.name_to_buffer[r.name]
+                    if r.name in V.graph.name_to_buffer.keys()
+                    else None
+                )
                 for r in reads
             ]
             # only consider reads to buffer of same size
@@ -3312,7 +3312,7 @@ class ComputedBuffer(Buffer):
                 stride_lengths = [
                     V.graph.sizevars.stride_hints(expr, indices) for expr in reads  # type: ignore[arg-type]
                 ]
-                from .scheduler import pick_loop_order
+                from .scheduler import pick_loop_order  # type: ignore[attr-defined]
 
                 return pick_loop_order(stride_lengths, self.get_size())
 
@@ -3400,9 +3400,11 @@ class ComputedBuffer(Buffer):
             index_formulas += extra_indexing_expr
 
         reads_bufs = [
-            V.graph.name_to_buffer[reads_name]
-            if reads_name in V.graph.name_to_buffer.keys()
-            else None
+            (
+                V.graph.name_to_buffer[reads_name]
+                if reads_name in V.graph.name_to_buffer.keys()
+                else None
+            )
             for reads_name in body.reads_name2expr.keys()
         ]
         memory_addrs = [
@@ -3468,7 +3470,7 @@ class ComputedBuffer(Buffer):
         """
         Shuffle the order of loops around to hopefully improve performance.
         """
-        from .scheduler import pick_loop_order
+        from .scheduler import pick_loop_order  # type: ignore[attr-defined]
 
         if priority_idx is None:
             priority_idx = []
@@ -4104,9 +4106,7 @@ class ExternKernel(InputsKernel):
         return pw
 
     @classmethod
-    def process_kernel(
-        cls, kernel, *args, **kwargs
-    ) -> Tuple[
+    def process_kernel(cls, kernel, *args, **kwargs) -> Tuple[
         Any,
         List[Any],
         List[Any],
@@ -4328,11 +4328,13 @@ class ExternKernel(InputsKernel):
                     x,
                     freeze=True,
                     want_contiguous=False,
-                    stride_order=get_stride_order(
-                        V.graph.sizevars.size_hints(x.get_layout().stride)
-                    )
-                    if is_stride_order_storage_and_layout(x, order)
-                    else order,
+                    stride_order=(
+                        get_stride_order(
+                            V.graph.sizevars.size_hints(x.get_layout().stride)
+                        )
+                        if is_stride_order_storage_and_layout(x, order)
+                        else order
+                    ),
                     allow_padding=allow_padding,
                 )
                 return x
@@ -4587,9 +4589,11 @@ class RandomSeeds(ExternKernelOut):
             # FIXME: Ideally we should only use at::_ops::randint_low_out::call here,
             # but the signature is different from is at::randint_out. Again,
             # we can simplify the code when only keeping an ABI-compatible version.
-            cpp_kernel_name="at::_ops::randint_low_out::call"
-            if config.abi_compatible
-            else "at::randint_out",
+            cpp_kernel_name=(
+                "at::_ops::randint_low_out::call"
+                if config.abi_compatible
+                else "at::randint_out"
+            ),
             op_overload=aten.randint.low_out,
         )
 
