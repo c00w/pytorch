@@ -731,7 +731,7 @@ def _optimize(
     # easier to understand UX at the cost of a little more plumbing on our end.
     hooks = Hooks(guard_export_fn=guard_export_fn, guard_fail_fn=guard_fail_fn)
     torch._C._log_api_usage_once("torch._dynamo.optimize")
-    if disable or os.environ.get("TORCHDYNAMO_DISABLE", "") == "1":
+    if disable or os.environ.get("TORCHDYNAMO_DISABLE", "") == "1" or (not torch._utils_internal.justknobs_check("pytorch/compiler:enable_dynamo")):
         return _NullDecorator()
 
     backend = get_compiler_fn(backend)
