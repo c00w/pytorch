@@ -1,6 +1,7 @@
 # Owner(s): ["module: unknown"]
 
 import os
+import sys
 
 from torch._utils_internal import justknobs_feature, JustKnobsConfig
 from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
@@ -13,9 +14,20 @@ from torch.testing._internal.common_utils import (  # type: ignore[attr-defined]
 load_tests = load_tests
 
 from torch.testing._internal.common_utils import run_tests, TestCase
+from torch.testing._internal import fake_config_module
 
 
 class TestJustKnob(TestCase):
+    def test_justknob_config_module(self):
+        with self.subTest("saving+loading works correctly"):
+            fake_config_module.load_config(fake_config_module.save_config())
+        with self.subTest("portable converts to int"):
+            out = fake_config_module.save_config_portable()
+            self.assertEqual(out, {"example_knob_force": True})
+        with self.subTest("codegen config"):
+            out = fake_config_module.codegen_config()
+            self.assertEqual(out, "torch.testing._internal.fake_config_module.example_knob_force = True")
+
     def test_justknob_config_equality(self):
         self.assertEqual(JustKnobsConfig(), JustKnobsConfig())
         self.assertEqual(
