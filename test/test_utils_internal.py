@@ -16,6 +16,32 @@ from torch.testing._internal.common_utils import run_tests, TestCase
 
 
 class TestJustKnob(TestCase):
+    def test_justknob_config_equality(self):
+        self.assertEqual(JustKnobsConfig(), JustKnobsConfig())
+        self.assertEqual(
+            JustKnobsConfig(name="fakename", env_name="envname", default=False),
+            JustKnobsConfig(name="fakename", env_name="envname", default=False),
+        )
+        self.assertNotEqual(
+            JustKnobsConfig(name="fakename", env_name="envname", default=False),
+            JustKnobsConfig(name="different", env_name="envname", default=False),
+        )
+        self.assertNotEqual(
+            JustKnobsConfig(name="fakename", env_name="envname", default=False),
+            JustKnobsConfig(name="fakename", env_name="different", default=False),
+        )
+        self.assertNotEqual(
+            JustKnobsConfig(name="fakename", env_name="envname", default=False),
+            JustKnobsConfig(name="fakename", env_name="envname", default=True),
+        )
+        a, b = JustKnobsConfig(), JustKnobsConfig()
+        a.set(False)
+        self.assertNotEqual(a, b)
+        a.set(True)
+        self.assertNotEqual(a, b)
+        b.set(True)
+        self.assertEqual(a, b)
+
     def test_justknob_config(self):
         with self.subTest("Returns True"):
             a = JustKnobsConfig()

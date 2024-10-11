@@ -213,6 +213,15 @@ class JustKnobsConfig:
     def __bool__(self):
         return self.get()
 
+    def __eq__(self, other):
+        # Note - we skip executed_value here because a config that's been called should equal a config which has not been called.
+        return (
+            self.name == other.name
+            and self.env_name == other.env_name
+            and self.default == other.default
+            and self.value == other.value
+        )
+
 
 def justknobs_feature(
     name: Optional[str], config_value=None, env_name=None, default: bool = True
