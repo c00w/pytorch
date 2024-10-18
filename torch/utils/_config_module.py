@@ -43,7 +43,6 @@ def install_config_module(module: ModuleType) -> None:
 
             name = f"{prefix}{key}"
             if isinstance(value, CONFIG_TYPES):
-                config[name] = value
                 default[name] = value
                 if dest is module:
                     delattr(module, key)
@@ -65,7 +64,7 @@ def install_config_module(module: ModuleType) -> None:
     compile_ignored_keys = get_assignments_with_compile_ignored_comments(module)
 
     visit(module, module, "")
-    module._config = config  # type: ignore[attr-defined]
+    module._user_override = {} # type: ignore[attr-defined]
     module._default = default  # type: ignore[attr-defined]
     module._allowed_keys = set(config.keys())  # type: ignore[attr-defined]
     module._compile_ignored_keys = compile_ignored_keys  # type: ignore[attr-defined]
@@ -120,14 +119,17 @@ class ConfigModule(ModuleType):
     # NOTE: This should be kept in sync with _config_typing.pyi.
 
     # The default values of the configuration settings.  This can be used to
-    # determine if the config has been changed or not.
-    _default: Dict[str, Any]
-    # The actual configuration settings.  E.g., torch._dynamo.config.debug
+    # determine if the config has been changed or not. It's also used to populate 
+    # values if there isn't anything changing the default.
+    # All the dicts here, user the following semantics for keys
+    # E.g., torch._dynamo.config.debug
     # would live as "debug" in the key, and torch._inductor.config.triton.cudagraphs
     # maps as "triton.cudagraphs"
-    _config: Dict[str, Any]
+    _default: Dict[str, Any]
+    # overrides supplied by the user.
+    _user_override: Dict[str, Any]
+
     _allowed_keys: Set[str]
-    _bypass_keys: Set[str]
     _compile_ignored_keys: Set[str]
     _is_dirty: bool
     _hash_digest: Optional[bytes]
@@ -143,11 +145,13 @@ class ConfigModule(ModuleType):
         elif name not in self._allowed_keys:
             raise AttributeError(f"{self.__name__}.{name} does not exist")
         else:
-            self._config[name] = value
+            self._user_override[name] = value
 
     def __getattr__(self, name: str) -> Any:
         try:
-            return self._config[name]
+            if name in self._user_override:
+                return self._user_override[name]
+            return self._default[name]
         except KeyError as e:
             # make hasattr() work properly
             raise AttributeError(f"{self.__name__}.{name} does not exist") from e
@@ -155,7 +159,7 @@ class ConfigModule(ModuleType):
     def __delattr__(self, name: str) -> None:
         # must support delete because unittest.mock.patch deletes
         # then recreate things
-        del self._config[name]
+        del self._user_override[name]
 
     def save_config(self) -> bytes:
         """Convert config to a pickled blob"""
