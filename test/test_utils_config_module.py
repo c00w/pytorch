@@ -1,5 +1,10 @@
 # Owner(s): ["module: unknown"]
+import os
 import pickle
+
+
+os.environ["ENV_TRUE"] = "TRUE"
+os.environ["ENV_FALSE"] = "FALSE"
 
 from torch.testing._internal import fake_config_module as config
 from torch.testing._internal.common_utils import run_tests, TestCase
@@ -70,6 +75,18 @@ class TestConfigModule(TestCase):
         for k in config._config:
             config._config[k].user_override = _UNSET_SENTINEL
 
+    def test_env_name_semantics(self):
+        self.assertTrue(config.e_env_default)
+        self.assertFalse(config.e_env_default_FALSE)
+        self.assertTrue(config.e_env_force)
+        config.e_env_default = False
+        self.assertFalse(config.e_env_default)
+        config.e_env_force = False
+        self.assertTrue(config.e_env_force)
+        for k in config._config:
+            config._config[k].user_override = _UNSET_SENTINEL
+
+
     def test_save_config(self):
         p = config.save_config()
         self.assertEqual(
@@ -93,6 +110,9 @@ class TestConfigModule(TestCase):
                 "e_config": True,
                 "e_jk": True,
                 "e_jk_false": False,
+                "e_env_default": True,
+                "e_env_default_FALSE": False,
+                "e_env_force": True,
             },
         )
         config.e_bool = False
@@ -123,6 +143,9 @@ class TestConfigModule(TestCase):
                 "e_config": True,
                 "e_jk": True,
                 "e_jk_false": False,
+                "e_env_default": True,
+                "e_env_default_FALSE": False,
+                "e_env_force": True,
             },
         )
         config.e_bool = False
@@ -152,28 +175,28 @@ torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""
 
     def test_get_hash(self):
         self.assertEqual(
-            config.get_hash(), b"\xa8\xe0\x9b\xfc*\xc4P\xb5g\x1e_\x03 \x7fA\x05"
+            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
         )
         # Test cached value
         self.assertEqual(
-            config.get_hash(), b"\xa8\xe0\x9b\xfc*\xc4P\xb5g\x1e_\x03 \x7fA\x05"
+            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
         )
         self.assertEqual(
-            config.get_hash(), b"\xa8\xe0\x9b\xfc*\xc4P\xb5g\x1e_\x03 \x7fA\x05"
+            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
         )
         config._hash_digest = "fake"
         self.assertEqual(config.get_hash(), "fake")
 
         config.e_bool = False
         self.assertNotEqual(
-            config.get_hash(), b"\xa8\xe0\x9b\xfc*\xc4P\xb5g\x1e_\x03 \x7fA\x05"
+            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
         )
         config.e_bool = True
 
         # Test ignored values
         config.e_compile_ignored = False
         self.assertEqual(
-            config.get_hash(), b"\xa8\xe0\x9b\xfc*\xc4P\xb5g\x1e_\x03 \x7fA\x05"
+            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
         )
         for k in config._config:
             config._config[k].user_override = _UNSET_SENTINEL
@@ -202,6 +225,9 @@ torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""
                 "e_config": True,
                 "e_jk": True,
                 "e_jk_false": False,
+                "e_env_default": True,
+                "e_env_default_FALSE": False,
+                "e_env_force": True,
             },
         )
         p2 = config.to_dict()
@@ -227,6 +253,9 @@ torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""
                 "e_config": True,
                 "e_jk": True,
                 "e_jk_false": False,
+                "e_env_default": True,
+                "e_env_default_FALSE": False,
+                "e_env_force": True,
             },
         )
         p3 = config.get_config_copy()
@@ -252,6 +281,9 @@ torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""
                 "e_config": True,
                 "e_jk": True,
                 "e_jk_false": False,
+                "e_env_default": True,
+                "e_env_default_FALSE": False,
+                "e_env_force": True,
             },
         )
 
