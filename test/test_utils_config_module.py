@@ -174,29 +174,29 @@ torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""
             config._config[k].user_override = _UNSET_SENTINEL
 
     def test_get_hash(self):
-        self.assertEqual(
-            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
+        self.assertExpectedInline(
+            config.get_hash(), ''
         )
         # Test cached value
         self.assertEqual(
-            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
+            config.get_hash(), ''
         )
         self.assertEqual(
-            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
+            config.get_hash(), ''
         )
         config._hash_digest = "fake"
         self.assertEqual(config.get_hash(), "fake")
 
         config.e_bool = False
         self.assertNotEqual(
-            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
+            config.get_hash(), ''
         )
         config.e_bool = True
 
         # Test ignored values
         config.e_compile_ignored = False
         self.assertEqual(
-            config.get_hash(), b"U\x8bi\xc2~PY\x98\x18\x9d\xf8<\xe4\xbc%\x0c"
+            config.get_hash(), ''
         )
         for k in config._config:
             config._config[k].user_override = _UNSET_SENTINEL
