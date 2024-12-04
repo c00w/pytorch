@@ -31,6 +31,9 @@ class TestConfigModule(TestCase):
             AttributeError, msg="fake_config_module.does_not_exist does not exist"
         ):
             config.does_not_exist
+        # reading reference types sets them.
+        for k in config._config:
+            config._config[k].user_override = _UNSET_SENTINEL
 
     def test_type_loading(self):
         self.assertEqual(config.get_type("e_optional"), Optional[bool])
@@ -177,9 +180,6 @@ class TestConfigModule(TestCase):
         self.assertEqual(
             code,
             """torch.testing._internal.fake_config_module.e_bool = False
-torch.testing._internal.fake_config_module.e_list = [1]
-torch.testing._internal.fake_config_module.e_set = {1}
-torch.testing._internal.fake_config_module.e_dict = {1: 2}
 torch.testing._internal.fake_config_module._save_config_ignore = ['e_ignored']""",
         )
         # Config changes get persisted between test cases
